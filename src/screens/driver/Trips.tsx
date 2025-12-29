@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
-import { mockApi } from '../../services/mockApi';
+import { fetchTrips, fetchVehicles, fetchInvoices, fetchNotifications } from '../../services/dataService';
+import { FIREBASE_FEATURES } from '../../config/featureFlags';
 import { Colors, Spacing, Radius, Shadows } from '../../theme/tokens';
 import { TripStatus } from '../../services/types';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -17,8 +18,8 @@ const filters: { label: string; value?: TripStatus }[] = [
 
 export const DriverTrips: React.FC = () => {
   const [filter, setFilter] = useState<TripStatus | undefined>();
-  const navigation = useNavigation();
-  const { data } = useQuery({ queryKey: ['driver-trips', filter], queryFn: () => mockApi.fetchTrips(filter) });
+  const navigation = useNavigation<any>();
+  const { data } = useQuery({ queryKey: ['driver-trips', filter], queryFn: () => fetchTrips(filter) });
 
   return (
     <View style={styles.container}>
@@ -55,7 +56,7 @@ export const DriverTrips: React.FC = () => {
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.tripCard}
-            onPress={() => navigation.navigate('DriverTripDetail' as never, { id: item.id } as never)}
+            onPress={() => navigation.navigate('DriverTripDetail', { id: item.id })}
           >
             <View style={styles.cardHeader}>
               <Text style={styles.tripCode}>{item.code}</Text>

@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import { Colors, Spacing, Radius, Shadows } from '../../theme/tokens';
 import { useSessionStore } from '../../store/session';
-import { mockApi } from '../../services/mockApi';
+import { fetchTrips, fetchVehicles, fetchInvoices, fetchNotifications } from '../../services/dataService';
+import { FIREBASE_FEATURES } from '../../config/featureFlags';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
@@ -21,7 +22,7 @@ export const AuthFlow: React.FC = () => {
   const steps = ['Welcome', 'Permissions', 'Login', 'OTP', 'Organization', 'Branch', 'Role'];
 
   const next = async () => {
-    if (step === 2) await mockApi.login();
+    if (step === 2) await new Promise(resolve => setTimeout(resolve, 500)); // Simulate login delay
     if (step === steps.length - 1) {
       setOrg({ id: orgId, name: 'Apex Logistics' });
       setBranch({ id: branchId, name: 'Mumbai Hub', orgId });

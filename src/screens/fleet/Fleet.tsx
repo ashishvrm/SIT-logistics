@@ -1,13 +1,14 @@
 import React from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { mockApi } from '../../services/mockApi';
+import { fetchTrips, fetchVehicles, fetchInvoices, fetchNotifications } from '../../services/dataService';
+import { FIREBASE_FEATURES } from '../../config/featureFlags';
 import { Colors, Spacing, Radius, Shadows } from '../../theme/tokens';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 export const FleetFleet: React.FC = () => {
-  const { data } = useQuery({ queryKey: ['vehicles'], queryFn: () => mockApi.fetchVehicles() });
+  const { data } = useQuery({ queryKey: ['vehicles'], queryFn: () => fetchVehicles(FIREBASE_FEATURES.ORG_ID) });
   
   const getStatusColor = (status: string) => {
     switch (status) {

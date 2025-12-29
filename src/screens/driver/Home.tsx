@@ -2,14 +2,18 @@ import React from 'react';
 import { View, Text, ScrollView, StyleSheet, TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
-import { mockApi } from '../../services/mockApi';
+import { fetchTrips } from '../../services/dataService';
+import { FIREBASE_FEATURES } from '../../config/featureFlags';
 import { Colors, Spacing, Radius, Shadows } from '../../theme/tokens';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 export const DriverHome: React.FC = () => {
-  const navigation = useNavigation();
-  const { data: trips } = useQuery({ queryKey: ['driver-trips'], queryFn: () => mockApi.fetchTrips() });
+  const navigation = useNavigation<any>();
+  const { data: trips } = useQuery({ 
+    queryKey: ['driver-trips', FIREBASE_FEATURES.ORG_ID], 
+    queryFn: () => fetchTrips(FIREBASE_FEATURES.ORG_ID) 
+  });
 
   return (
     <View style={styles.container}>
@@ -67,7 +71,7 @@ export const DriverHome: React.FC = () => {
               </View>
             </View>
 
-            <Text onPress={() => navigation.navigate('DriverTripDetail' as never, { id: trip.id } as never)} style={styles.viewDetails}>
+            <Text onPress={() => navigation.navigate('DriverTripDetail', { id: trip.id })} style={styles.viewDetails}>
               View Details →
             </Text>
           </View>

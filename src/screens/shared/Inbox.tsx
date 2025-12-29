@@ -1,13 +1,14 @@
 import React from 'react';
 import { FlatList, View, Text, StyleSheet } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { mockApi } from '../../services/mockApi';
+import { fetchTrips, fetchVehicles, fetchInvoices, fetchNotifications } from '../../services/dataService';
+import { FIREBASE_FEATURES } from '../../config/featureFlags';
 import { Colors, Spacing, Radius, Shadows } from '../../theme/tokens';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 export const DriverInbox: React.FC = () => {
-  const { data } = useQuery({ queryKey: ['notifications'], queryFn: () => mockApi.fetchNotifications() });
+  const { data } = useQuery({ queryKey: ['notifications'], queryFn: () => fetchNotifications(FIREBASE_FEATURES.TEST_DRIVER_ID) });
   
   return (
     <View style={styles.container}>

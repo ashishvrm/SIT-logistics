@@ -2,19 +2,20 @@ import React from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { mockApi } from '../../services/mockApi';
+import { fetchTrips, updateTripStatus } from '../../services/dataService';
+import { FIREBASE_FEATURES } from '../../config/featureFlags';
 import { Colors, Spacing, Radius, Shadows } from '../../theme/tokens';
 import { Trip } from '../../services/types';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export const DriverTripDetail: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const route = useRoute<RouteProp<{ params: { id: string } }, 'params'>>();
   const queryClient = useQueryClient();
-  const { data: trip } = useQuery({ queryKey: ['trip', route.params.id], queryFn: () => mockApi.fetchTrips().then((t) => t.find((x) => x.id === route.params.id) as Trip) });
+  const { data: trip } = useQuery({ queryKey: ['trip', route.params.id], queryFn: () => fetchTrips(FIREBASE_FEATURES.ORG_ID).then((t) => t.find((x) => x.id === route.params.id) as Trip) });
   const mutation = useMutation({
-    mutationFn: (status: Trip['status']) => mockApi.updateTripStatus(route.params.id, status),
+    mutationFn: (status: Trip['status']) => updateTripStatus(route.params.id, status),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['driver-trips'] })
   });
 
@@ -109,7 +110,7 @@ export const DriverTripDetail: React.FC = () => {
 
         <TouchableOpacity
           style={styles.primaryButton}
-          onPress={() => navigation.navigate('DriverTracking' as never, { id: trip.id } as never)}
+          onPress={() => navigation.navigate('DriverTracking', { id: trip.id })}
         >
           <Icon name="map-marker-path" size={20} color={Colors.textLight} />
           <Text style={styles.primaryButtonText}>Track Live</Text>

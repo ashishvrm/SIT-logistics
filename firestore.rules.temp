@@ -1,0 +1,30 @@
+/**
+ * TEMPORARY DEVELOPMENT RULES
+ * 
+ * IMPORTANT: These rules allow all reads/writes for development/testing.
+ * Use ONLY during initial setup and seeding.
+ * 
+ * TO USE:
+ * 1. Go to Firebase Console: https://console.firebase.google.com
+ * 2. Select your project: sip-logistics
+ * 3. Go to Firestore Database → Rules
+ * 4. Copy and paste the rules below
+ * 5. Click "Publish"
+ * 6. Run the seed script: npx ts-node scripts/seedFirestore.ts
+ * 7. AFTER seeding, deploy production rules: firebase deploy --only firestore:rules
+ */
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // TEMPORARY: Allow all reads and writes
+    // DO NOT USE IN PRODUCTION
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
+
+/**
+ * After seeding data, replace with production rules from firestore.rules
+ */

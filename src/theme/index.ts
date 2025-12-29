@@ -15,7 +15,6 @@ export const theme = {
     primary: Colors.primary,
     background: Colors.lightBackground,
     surface: Colors.lightSurface,
-    elevation: MD3DarkTheme.elevation,
     onSurface: Colors.textPrimary,
     outline: Colors.border,
     secondary: Colors.textSecondary,

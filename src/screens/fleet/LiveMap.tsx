@@ -2,14 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import MapView, { Marker, Region } from 'react-native-maps';
 import { useQuery } from '@tanstack/react-query';
-import { mockApi } from '../../services/mockApi';
+import { fetchTrips, fetchVehicles, fetchInvoices, fetchNotifications } from '../../services/dataService';
+import { FIREBASE_FEATURES } from '../../config/featureFlags';
 import { Colors, Spacing, Radius, Shadows } from '../../theme/tokens';
 import { MapControls } from '../../components/maps/MapControls';
 import { gpsEvents } from '../../services/gpsSimulator';
 import { Vehicle } from '../../services/types';
 
 export const FleetLiveMap: React.FC = () => {
-  const { data: initialVehicles } = useQuery({ queryKey: ['vehicles'], queryFn: () => mockApi.fetchVehicles() });
+  const { data: initialVehicles } = useQuery({ queryKey: ['vehicles'], queryFn: () => fetchVehicles(FIREBASE_FEATURES.ORG_ID) });
   const [vehicles, setVehicles] = useState<Vehicle[]>(initialVehicles || []);
   const [region, setRegion] = useState<Region | undefined>(
     initialVehicles?.[0]

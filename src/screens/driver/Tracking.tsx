@@ -3,7 +3,8 @@ import MapView, { Marker, Polyline, Region } from 'react-native-maps';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
-import { mockApi } from '../../services/mockApi';
+import { fetchTrips, fetchVehicles, fetchInvoices, fetchNotifications } from '../../services/dataService';
+import { FIREBASE_FEATURES } from '../../config/featureFlags';
 import { Colors, Spacing, Radius, Shadows } from '../../theme/tokens';
 import { MapControls } from '../../components/maps/MapControls';
 import { gpsEvents } from '../../services/gpsSimulator';
@@ -13,7 +14,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 export const DriverTracking: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute<RouteProp<{ params: { id: string } }, 'params'>>();
-  const { data: trip } = useQuery({ queryKey: ['trip', route.params.id], queryFn: () => mockApi.fetchTrips().then((t) => t.find((x) => x.id === route.params.id)!) });
+  const { data: trip } = useQuery({ queryKey: ['trip', route.params.id], queryFn: () => fetchTrips(FIREBASE_FEATURES.ORG_ID).then((t) => t.find((x) => x.id === route.params.id)!) });
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [region, setRegion] = useState<Region | undefined>();
 

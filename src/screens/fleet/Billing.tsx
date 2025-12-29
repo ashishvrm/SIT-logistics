@@ -1,14 +1,15 @@
 import React from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { mockApi } from '../../services/mockApi';
+import { fetchTrips, fetchVehicles, fetchInvoices, fetchNotifications } from '../../services/dataService';
+import { FIREBASE_FEATURES } from '../../config/featureFlags';
 import { Colors, Spacing, Radius, Shadows } from '../../theme/tokens';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 export const FleetBilling: React.FC = () => {
-  const { data } = useQuery({ queryKey: ['invoices'], queryFn: () => mockApi.fetchInvoices() });
+  const { data } = useQuery({ queryKey: ['invoices'], queryFn: () => fetchInvoices(FIREBASE_FEATURES.ORG_ID) });
   
   const totalRevenue = data?.reduce((sum, inv) => sum + inv.amount, 0) || 0;
   const paidCount = data?.filter(inv => inv.status === 'Paid').length || 0;

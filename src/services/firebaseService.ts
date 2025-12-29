@@ -104,11 +104,29 @@ export const fetchVehicles = async (orgId?: string): Promise<Vehicle[]> => {
     : vehiclesRef;
   
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-    lastSeen: doc.data().lastSeen?.toDate().toISOString() || new Date().toISOString()
-  } as Vehicle));
+  return snapshot.docs.map(doc => {
+    const data = doc.data();
+    
+    // Map Firebase status to app status
+    let status: 'moving' | 'idle' | 'offline' | 'on-trip' = 'idle';
+    if (data.status === 'InUse' && data.speed > 0) status = 'moving';
+    else if (data.status === 'InUse') status = 'on-trip';
+    else if (data.status === 'Available') status = 'idle';
+    else status = 'offline';
+    
+    return {
+      id: doc.id,
+      plate: data.registration || data.plate || 'UNKNOWN',
+      model: data.model || 'Unknown Model',
+      status,
+      lat: data.lat || 0,
+      lng: data.lng || 0,
+      speed: data.speed || 0,
+      heading: data.heading || 0,
+      lastSeen: data.lastSeen?.toDate?.()?.toISOString() || new Date().toISOString(),
+      driverId: data.driverId || undefined
+    } as Vehicle;
+  });
 };
 
 export const updateVehicleLocation = async (
@@ -159,25 +177,48 @@ export const fetchTrips = async (
   driverId?: string
 ): Promise<Trip[]> => {
   const tripsRef = collection(db, 'trips');
-  let q = query(tripsRef, orderBy('startTime', 'desc'));
+  
+  // Build query with where clauses first, then orderBy
+  const constraints = [];
   
   if (orgId) {
-    q = query(q, where('orgId', '==', orgId));
+    constraints.push(where('orgId', '==', orgId));
   }
   if (status) {
-    q = query(q, where('status', '==', status));
+    constraints.push(where('status', '==', status));
   }
   if (driverId) {
-    q = query(q, where('driverId', '==', driverId));
+    constraints.push(where('driverId', '==', driverId));
   }
   
+  // Add orderBy last
+  constraints.push(orderBy('startTime', 'desc'));
+  
+  const q = query(tripsRef, ...constraints);
+  
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-    startTime: doc.data().startTime?.toDate().toISOString() || new Date().toISOString(),
-    eta: doc.data().eta?.toDate().toISOString() || new Date().toISOString()
-  } as Trip));
+  return snapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      code: data.code || `TRK-${doc.id.slice(0, 6).toUpperCase()}`,
+      status: data.status || 'Draft',
+      vehicleId: data.vehicleId || '',
+      driverId: data.driverId || '',
+      pickup: data.origin?.address || data.pickup || 'Unknown Origin',
+      drop: data.destination?.address || data.drop || 'Unknown Destination',
+      customer: data.destination?.contact?.name || data.customer || 'Unknown Customer',
+      startTime: data.startTime?.toDate?.()?.toISOString() || new Date().toISOString(),
+      eta: data.eta?.toDate?.()?.toISOString() || new Date().toISOString(),
+      distanceKm: data.distance || data.distanceKm || 0,
+      cargo: data.cargo?.description || data.cargo?.type || data.cargo || 'Unknown Cargo',
+      checkpoints: data.checkpoints || [],
+      route: data.route?.map((point: any) => ({
+        lat: point.latitude || point.lat || 0,
+        lng: point.longitude || point.lng || 0
+      })) || []
+    } as Trip;
+  });
 };
 
 export const fetchTrip = async (tripId: string): Promise<Trip | null> => {
@@ -186,11 +227,25 @@ export const fetchTrip = async (tripId: string): Promise<Trip | null> => {
   
   if (!snapshot.exists()) return null;
   
+  const data = snapshot.data();
   return {
     id: snapshot.id,
-    ...snapshot.data(),
-    startTime: snapshot.data().startTime?.toDate().toISOString() || new Date().toISOString(),
-    eta: snapshot.data().eta?.toDate().toISOString() || new Date().toISOString()
+    code: data.code || `TRK-${snapshot.id.slice(0, 6).toUpperCase()}`,
+    status: data.status || 'Draft',
+    vehicleId: data.vehicleId || '',
+    driverId: data.driverId || '',
+    pickup: data.origin?.address || data.pickup || 'Unknown Origin',
+    drop: data.destination?.address || data.drop || 'Unknown Destination',
+    customer: data.destination?.contact?.name || data.customer || 'Unknown Customer',
+    startTime: data.startTime?.toDate?.()?.toISOString() || new Date().toISOString(),
+    eta: data.eta?.toDate?.()?.toISOString() || new Date().toISOString(),
+    distanceKm: data.distance || data.distanceKm || 0,
+    cargo: data.cargo?.description || data.cargo?.type || data.cargo || 'Unknown Cargo',
+    checkpoints: data.checkpoints || [],
+    route: data.route?.map((point: any) => ({
+      lat: point.latitude || point.lat || 0,
+      lng: point.longitude || point.lng || 0
+    })) || []
   } as Trip;
 };
 
@@ -268,10 +323,16 @@ export const fetchInvoices = async (orgId?: string): Promise<Invoice[]> => {
     : invoicesRef;
   
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data()
-  } as Invoice));
+  return snapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      customer: data.customerName || data.customer || 'Unknown',
+      amount: data.total || data.amount || 0,
+      status: data.status || 'Draft',
+      dueDate: data.dueDate?.toDate?.()?.toISOString() || data.dueDate || new Date().toISOString()
+    } as Invoice;
+  });
 };
 
 export const createInvoice = async (invoiceData: Omit<Invoice, 'id'>): Promise<string> => {
