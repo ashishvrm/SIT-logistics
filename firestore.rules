@@ -1,0 +1,180 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ============= HELPER FUNCTIONS =============
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    function belongsToOrg(orgId) {
+      return isAuthenticated() && getUserData().orgId == orgId;
+    }
+    
+    function isDriver() {
+      return isAuthenticated() && getUserData().role == "Driver";
+    }
+    
+    function isFleetManager() {
+      return isAuthenticated() && getUserData().role == "FleetManager";
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && getUserData().role == "Admin";
+    }
+    
+    function canManageOrg(orgId) {
+      return (isFleetManager() || isAdmin()) && belongsToOrg(orgId);
+    }
+    
+    // ============= ORGANIZATIONS =============
+    
+    match /organizations/{orgId} {
+      allow read: if belongsToOrg(orgId);
+      allow create: if isAuthenticated(); // Only during signup
+      allow update, delete: if canManageOrg(orgId);
+      
+      // Branches subcollection
+      match /branches/{branchId} {
+        allow read: if belongsToOrg(orgId);
+        allow write: if canManageOrg(orgId);
+      }
+    }
+    
+    // ============= USERS =============
+    
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (
+        request.auth.uid == userId || 
+        belongsToOrg(resource.data.orgId)
+      );
+      
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      
+      allow update: if isAuthenticated() && (
+        request.auth.uid == userId || 
+        canManageOrg(resource.data.orgId)
+      );
+      
+      allow delete: if canManageOrg(resource.data.orgId);
+    }
+    
+    // ============= VEHICLES =============
+    
+    match /vehicles/{vehicleId} {
+      allow read: if isAuthenticated() && belongsToOrg(resource.data.orgId);
+      
+      allow create: if canManageOrg(request.resource.data.orgId);
+      
+      allow update: if (
+        // Fleet managers can update everything
+        canManageOrg(resource.data.orgId) ||
+        // Drivers can update location, speed, heading, lastSeen
+        (isDriver() && resource.data.driverId == request.auth.uid &&
+         request.resource.data.diff(resource.data).affectedKeys()
+           .hasOnly(['lat', 'lng', 'speed', 'heading', 'lastSeen', 'fuelLevel', 'odometer']))
+      );
+      
+      allow delete: if canManageOrg(resource.data.orgId);
+      
+      // Location History subcollection
+      match /locationHistory/{locationId} {
+        allow read: if isAuthenticated() && 
+          belongsToOrg(get(/databases/$(database)/documents/vehicles/$(vehicleId)).data.orgId);
+        
+        allow create: if isAuthenticated() && (
+          isDriver() ||
+          canManageOrg(get(/databases/$(database)/documents/vehicles/$(vehicleId)).data.orgId)
+        );
+        
+        allow delete: if canManageOrg(
+          get(/databases/$(database)/documents/vehicles/$(vehicleId)).data.orgId
+        );
+      }
+      
+      // Maintenance subcollection
+      match /maintenance/{maintenanceId} {
+        allow read: if isAuthenticated() && 
+          belongsToOrg(get(/databases/$(database)/documents/vehicles/$(vehicleId)).data.orgId);
+        
+        allow write: if canManageOrg(
+          get(/databases/$(database)/documents/vehicles/$(vehicleId)).data.orgId
+        );
+      }
+    }
+    
+    // ============= TRIPS =============
+    
+    match /trips/{tripId} {
+      allow read: if isAuthenticated() && (
+        belongsToOrg(resource.data.orgId) ||
+        resource.data.driverId == request.auth.uid
+      );
+      
+      allow create: if canManageOrg(request.resource.data.orgId);
+      
+      allow update: if (
+        // Fleet managers can update everything
+        canManageOrg(resource.data.orgId) ||
+        // Drivers can only update status and specific fields
+        (isDriver() && resource.data.driverId == request.auth.uid &&
+         request.resource.data.diff(resource.data).affectedKeys()
+           .hasOnly(['status', 'updatedAt', 'completedAt', 'metadata']))
+      );
+      
+      allow delete: if canManageOrg(resource.data.orgId);
+      
+      // Trip Events subcollection
+      match /events/{eventId} {
+        allow read: if isAuthenticated() && (
+          belongsToOrg(get(/databases/$(database)/documents/trips/$(tripId)).data.orgId) ||
+          get(/databases/$(database)/documents/trips/$(tripId)).data.driverId == request.auth.uid
+        );
+        
+        allow create: if isAuthenticated() && (
+          canManageOrg(get(/databases/$(database)/documents/trips/$(tripId)).data.orgId) ||
+          get(/databases/$(database)/documents/trips/$(tripId)).data.driverId == request.auth.uid
+        );
+        
+        allow update, delete: if canManageOrg(
+          get(/databases/$(database)/documents/trips/$(tripId)).data.orgId
+        );
+      }
+    }
+    
+    // ============= INVOICES =============
+    
+    match /invoices/{invoiceId} {
+      allow read: if isAuthenticated() && belongsToOrg(resource.data.orgId);
+      
+      allow write: if canManageOrg(resource.data.orgId);
+    }
+    
+    // ============= NOTIFICATIONS =============
+    
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && request.auth.uid == resource.data.userId;
+      
+      allow create: if isAuthenticated(); // Any authenticated user can create
+      
+      allow update: if isAuthenticated() && (
+        request.auth.uid == resource.data.userId &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['read', 'readAt'])
+      );
+      
+      allow delete: if isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+    
+    // ============= OFFLINE QUEUE =============
+    
+    match /offlineQueue/{userId}/actions/{actionId} {
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+  }
+}
