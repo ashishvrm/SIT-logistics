@@ -28,14 +28,32 @@ const DriverTabNavigator = () => (
     screenOptions={{
       headerShown: false,
       tabBarActiveTintColor: Colors.primary,
-      tabBarStyle: { backgroundColor: Colors.lightSurface, borderTopLeftRadius: 18, borderTopRightRadius: 18 }
+      tabBarInactiveTintColor: Colors.textSecondary,
+      tabBarStyle: { 
+        backgroundColor: Colors.lightSurface,
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        height: 70,
+        paddingBottom: 10,
+        paddingTop: 10,
+        borderTopWidth: 0,
+        elevation: 8,
+        shadowColor: '#000',
+        shadowOpacity: 0.1,
+        shadowRadius: 16,
+        shadowOffset: { width: 0, height: -4 }
+      },
+      tabBarLabelStyle: {
+        fontSize: 12,
+        fontWeight: '600'
+      }
     }}
   >
-    <DriverTabs.Screen name="DriverHome" component={DriverHome} options={{ tabBarLabel: 'Home', tabBarIcon: ({ color }) => <Icon name="home" color={color} size={22} /> }} />
-    <DriverTabs.Screen name="DriverTrips" component={DriverTrips} options={{ tabBarLabel: 'Trips', tabBarIcon: ({ color }) => <Icon name="truck" color={color} size={22} /> }} />
-    <DriverTabs.Screen name="DriverEarnings" component={DriverEarnings} options={{ tabBarLabel: 'Earnings', tabBarIcon: ({ color }) => <Icon name="wallet" color={color} size={22} /> }} />
-    <DriverTabs.Screen name="DriverInbox" component={DriverInbox} options={{ tabBarLabel: 'Inbox', tabBarIcon: ({ color }) => <Icon name="bell" color={color} size={22} /> }} />
-    <DriverTabs.Screen name="DriverProfile" component={DriverProfile} options={{ tabBarLabel: 'Profile', tabBarIcon: ({ color }) => <Icon name="account" color={color} size={22} /> }} />
+    <DriverTabs.Screen name="DriverHome" component={DriverHome} options={{ tabBarLabel: 'Home', tabBarIcon: ({ color, size }) => <Icon name="home" color={color} size={size} /> }} />
+    <DriverTabs.Screen name="DriverTrips" component={DriverTrips} options={{ tabBarLabel: 'Trips', tabBarIcon: ({ color, size }) => <Icon name="truck" color={color} size={size} /> }} />
+    <DriverTabs.Screen name="DriverEarnings" component={DriverEarnings} options={{ tabBarLabel: 'Earnings', tabBarIcon: ({ color, size }) => <Icon name="wallet" color={color} size={size} /> }} />
+    <DriverTabs.Screen name="DriverInbox" component={DriverInbox} options={{ tabBarLabel: 'Inbox', tabBarIcon: ({ color, size }) => <Icon name="bell" color={color} size={size} /> }} />
+    <DriverTabs.Screen name="DriverProfile" component={DriverProfile} options={{ tabBarLabel: 'Profile', tabBarIcon: ({ color, size }) => <Icon name="account" color={color} size={size} /> }} />
   </DriverTabs.Navigator>
 );
 
@@ -44,14 +62,32 @@ const FleetTabNavigator = () => (
     screenOptions={{
       headerShown: false,
       tabBarActiveTintColor: Colors.primary,
-      tabBarStyle: { backgroundColor: Colors.lightSurface, borderTopLeftRadius: 18, borderTopRightRadius: 18 }
+      tabBarInactiveTintColor: Colors.textSecondary,
+      tabBarStyle: { 
+        backgroundColor: Colors.lightSurface,
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        height: 70,
+        paddingBottom: 10,
+        paddingTop: 10,
+        borderTopWidth: 0,
+        elevation: 8,
+        shadowColor: '#000',
+        shadowOpacity: 0.1,
+        shadowRadius: 16,
+        shadowOffset: { width: 0, height: -4 }
+      },
+      tabBarLabelStyle: {
+        fontSize: 12,
+        fontWeight: '600'
+      }
     }}
   >
-    <FleetTabs.Screen name="FleetDashboard" component={FleetDashboard} options={{ tabBarLabel: 'Dashboard', tabBarIcon: ({ color }) => <Icon name="view-dashboard" color={color} size={22} /> }} />
-    <FleetTabs.Screen name="FleetLiveMap" component={FleetLiveMap} options={{ tabBarLabel: 'Live Map', tabBarIcon: ({ color }) => <Icon name="map" color={color} size={22} /> }} />
-    <FleetTabs.Screen name="FleetTrips" component={FleetTrips} options={{ tabBarLabel: 'Trips', tabBarIcon: ({ color }) => <Icon name="clipboard-list" color={color} size={22} /> }} />
-    <FleetTabs.Screen name="FleetFleet" component={FleetFleet} options={{ tabBarLabel: 'Fleet', tabBarIcon: ({ color }) => <Icon name="truck-fast" color={color} size={22} /> }} />
-    <FleetTabs.Screen name="FleetBilling" component={FleetBilling} options={{ tabBarLabel: 'Billing', tabBarIcon: ({ color }) => <Icon name="cash" color={color} size={22} /> }} />
+    <FleetTabs.Screen name="FleetDashboard" component={FleetDashboard} options={{ tabBarLabel: 'Dashboard', tabBarIcon: ({ color, size }) => <Icon name="view-dashboard" color={color} size={size} /> }} />
+    <FleetTabs.Screen name="FleetLiveMap" component={FleetLiveMap} options={{ tabBarLabel: 'Live Map', tabBarIcon: ({ color, size }) => <Icon name="map" color={color} size={size} /> }} />
+    <FleetTabs.Screen name="FleetTrips" component={FleetTrips} options={{ tabBarLabel: 'Trips', tabBarIcon: ({ color, size }) => <Icon name="clipboard-list" color={color} size={size} /> }} />
+    <FleetTabs.Screen name="FleetFleet" component={FleetFleet} options={{ tabBarLabel: 'Fleet', tabBarIcon: ({ color, size }) => <Icon name="truck-fast" color={color} size={size} /> }} />
+    <FleetTabs.Screen name="FleetBilling" component={FleetBilling} options={{ tabBarLabel: 'Billing', tabBarIcon: ({ color, size }) => <Icon name="cash" color={color} size={size} /> }} />
   </FleetTabs.Navigator>
 );
 

@@ -1,21 +1,30 @@
 export const Colors = {
-  primary: '#468CF5',
-  darkSurface: '#202020',
-  darkSurface2: '#2B2B2B',
-  lightBackground: '#F7F8FA',
+  primary: '#FF6B35',
+  primaryDark: '#FF5722',
+  darkSurface: '#1A1A2E',
+  darkSurface2: '#16213E',
+  darkGradientStart: '#0F3460',
+  darkGradientEnd: '#16213E',
+  lightBackground: '#F5F7FA',
   lightSurface: '#FFFFFF',
-  border: '#E6E8EE',
-  textPrimary: '#111317',
-  textSecondary: '#6C7178',
-  success: '#22C55E',
-  warning: '#F59E0B',
-  error: '#EF4444'
+  border: '#E8ECF2',
+  textPrimary: '#1A1A2E',
+  textSecondary: '#8B92A8',
+  textLight: '#FFFFFF',
+  success: '#4CAF50',
+  warning: '#FFA726',
+  error: '#EF5350',
+  statusDelivering: '#FF6B35',
+  statusCompleted: '#4CAF50',
+  cardShadow: 'rgba(0, 0, 0, 0.08)'
 };
 
 export const Radius = {
-  card: 18,
-  bottomSheet: 24,
-  chip: 999
+  card: 20,
+  cardLarge: 24,
+  bottomSheet: 28,
+  chip: 999,
+  button: 12
 };
 
 export const Shadows = {
@@ -25,6 +34,13 @@ export const Shadows = {
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
     elevation: 4
+  },
+  card: {
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6
   }
 };
 

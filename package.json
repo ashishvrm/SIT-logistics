@@ -36,7 +36,7 @@
     "@babel/core": "^7.24.6",
     "@types/react": "18.2.36",
     "@types/react-native": "0.73.0",
-    "@types/react-native-maps": "^0.30.0",
+    "@types/react-native-maps": "^0.24.2",
     "typescript": "5.3.3",
     "eslint": "^8.57.0",
     "@typescript-eslint/eslint-plugin": "^6.21.0",

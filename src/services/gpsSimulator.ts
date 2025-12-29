@@ -1,8 +1,43 @@
-import { EventEmitter } from 'events';
 import { mockApi } from './mockApi';
 import { Vehicle } from './types';
 
-const emitter = new EventEmitter();
+// Simple EventEmitter implementation for React Native
+class SimpleEventEmitter {
+  private listeners: { [key: string]: Function[] } = {};
+
+  on(event: string, callback: Function) {
+    if (!this.listeners[event]) {
+      this.listeners[event] = [];
+    }
+    this.listeners[event].push(callback);
+  }
+
+  emit(event: string, data: any) {
+    if (this.listeners[event]) {
+      this.listeners[event].forEach(callback => callback(data));
+    }
+  }
+
+  off(event: string, callback: Function) {
+    if (this.listeners[event]) {
+      this.listeners[event] = this.listeners[event].filter(cb => cb !== callback);
+    }
+  }
+
+  removeListener(event: string, callback: Function) {
+    this.off(event, callback);
+  }
+
+  removeAllListeners(event?: string) {
+    if (event) {
+      delete this.listeners[event];
+    } else {
+      this.listeners = {};
+    }
+  }
+}
+
+const emitter = new SimpleEventEmitter();
 let started = false;
 
 const moveVehicle = (vehicle: Vehicle, step: number) => {
