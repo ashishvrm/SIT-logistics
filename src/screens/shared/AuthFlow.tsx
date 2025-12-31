@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator, Platform, Modal } from 'react-native';
 import * as Location from 'expo-location';
 import { Colors, Spacing, Radius, Shadows } from '../../theme/tokens';
 import { useSessionStore } from '../../store/session';
 import { fetchTrips, fetchVehicles, fetchInvoices, fetchNotifications } from '../../services/dataService';
 import { FIREBASE_FEATURES } from '../../config/featureFlags';
 import { authService } from '../../services/authService';
+import { fetchOrganizations, createOrganization } from '../../services/firebaseService';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
@@ -20,6 +21,9 @@ export const AuthFlow: React.FC = () => {
   const [error, setError] = useState('');
   const [locationGranted, setLocationGranted] = useState(false);
   const [notificationGranted, setNotificationGranted] = useState(false);
+  const [organizations, setOrganizations] = useState<Array<{id: string; name: string}>>([]);
+  const [showCreateOrg, setShowCreateOrg] = useState(false);
+  const [newOrgName, setNewOrgName] = useState('');
   
   const setLoggedIn = useSessionStore((s) => s.setLoggedIn);
   const setUserId = useSessionStore((s) => s.setUserId);
@@ -30,6 +34,45 @@ export const AuthFlow: React.FC = () => {
   const setRoleStore = useSessionStore((s) => s.setRole);
 
   const steps = ['Welcome', 'Permissions', 'Login', 'OTP', 'Organization', 'Branch', 'Role'];
+
+  // Load organizations when step 4 is reached
+  useEffect(() => {
+    if (step === 4 && organizations.length === 0) {
+      loadOrganizations();
+    }
+  }, [step]);
+
+  const loadOrganizations = async () => {
+    try {
+      const orgs = await fetchOrganizations();
+      setOrganizations(orgs);
+    } catch (error) {
+      console.error('Error loading organizations:', error);
+      Alert.alert('Error', 'Failed to load organizations');
+    }
+  };
+
+  const handleCreateOrganization = async () => {
+    if (!newOrgName.trim()) {
+      Alert.alert('Error', 'Please enter an organization name');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const newOrg = await createOrganization(newOrgName.trim());
+      setOrganizations([...organizations, newOrg]);
+      setOrgId(newOrg.id);
+      setNewOrgName('');
+      setShowCreateOrg(false);
+      Alert.alert('Success', 'Organization created successfully');
+    } catch (error) {
+      console.error('Error creating organization:', error);
+      Alert.alert('Error', 'Failed to create organization');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const requestLocationPermission = async () => {
     try {
@@ -244,22 +287,30 @@ export const AuthFlow: React.FC = () => {
 
             {step === 4 && (
               <View style={styles.optionsContainer}>
-                <TouchableOpacity
-                  style={[styles.optionButton, orgId === 'org1' && styles.optionButtonActive]}
-                  onPress={() => setOrgId('org1')}
-                >
-                  <Text style={[styles.optionText, orgId === 'org1' && styles.optionTextActive]}>
-                    Apex Logistics
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.optionButton, orgId === 'org2' && styles.optionButtonActive]}
-                  onPress={() => setOrgId('org2')}
-                >
-                  <Text style={[styles.optionText, orgId === 'org2' && styles.optionTextActive]}>
-                    Northlane Freight
-                  </Text>
-                </TouchableOpacity>
+                {organizations.length === 0 ? (
+                  <ActivityIndicator size="large" color={Colors.primary} />
+                ) : (
+                  <>
+                    {organizations.map((org) => (
+                      <TouchableOpacity
+                        key={org.id}
+                        style={[styles.optionButton, orgId === org.id && styles.optionButtonActive]}
+                        onPress={() => setOrgId(org.id)}
+                      >
+                        <Text style={[styles.optionText, orgId === org.id && styles.optionTextActive]}>
+                          {org.name}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                    <TouchableOpacity
+                      style={styles.createNewButton}
+                      onPress={() => setShowCreateOrg(true)}
+                    >
+                      <Icon name="plus-circle" size={20} color={Colors.primary} />
+                      <Text style={styles.createNewText}>Create New Organization</Text>
+                    </TouchableOpacity>
+                  </>
+                )}
               </View>
             )}
 
@@ -327,6 +378,58 @@ export const AuthFlow: React.FC = () => {
             )}
           </TouchableOpacity>
         </ScrollView>
+
+        {/* Create Organization Modal */}
+        <Modal
+          visible={showCreateOrg}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowCreateOrg(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Create New Organization</Text>
+                <TouchableOpacity onPress={() => setShowCreateOrg(false)}>
+                  <Icon name="close" size={24} color={Colors.textPrimary} />
+                </TouchableOpacity>
+              </View>
+              
+              <View style={styles.inputContainer}>
+                <Icon name="office-building" size={20} color={Colors.textSecondary} style={styles.inputIcon} />
+                <TextInput
+                  placeholder="Organization Name"
+                  placeholderTextColor={Colors.textSecondary}
+                  value={newOrgName}
+                  onChangeText={setNewOrgName}
+                  style={styles.input}
+                  editable={!loading}
+                />
+              </View>
+
+              <View style={styles.modalActions}>
+                <TouchableOpacity
+                  style={styles.modalCancelButton}
+                  onPress={() => setShowCreateOrg(false)}
+                  disabled={loading}
+                >
+                  <Text style={styles.modalCancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalSaveButton, loading && styles.primaryButtonDisabled]}
+                  onPress={handleCreateOrganization}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <ActivityIndicator color={Colors.textLight} size="small" />
+                  ) : (
+                    <Text style={styles.modalSaveText}>Create</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </LinearGradient>
     </View>
   );
@@ -523,5 +626,78 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: Colors.primary,
     fontSize: 16
+  },
+  createNewButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: Radius.button,
+    borderWidth: 2,
+    borderColor: Colors.primary,
+    backgroundColor: Colors.lightBackground,
+    gap: 8,
+    marginTop: 8
+  },
+  createNewText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.primary
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.lg
+  },
+  modalContent: {
+    backgroundColor: Colors.lightSurface,
+    borderRadius: Radius.cardLarge,
+    padding: Spacing.lg,
+    width: '100%',
+    maxWidth: 400,
+    ...Shadows.card
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: Colors.textPrimary
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 20
+  },
+  modalCancelButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: Radius.button,
+    backgroundColor: Colors.lightBackground,
+    alignItems: 'center'
+  },
+  modalCancelText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.textSecondary
+  },
+  modalSaveButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: Radius.button,
+    backgroundColor: Colors.primary,
+    alignItems: 'center'
+  },
+  modalSaveText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.textLight
   }
 });

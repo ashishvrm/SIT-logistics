@@ -4,6 +4,7 @@ import {
   getDoc, 
   getDocs, 
   addDoc, 
+  setDoc,
   updateDoc, 
   query, 
   where, 
@@ -49,6 +50,19 @@ export const fetchOrganization = async (orgId: string): Promise<Org | null> => {
   const orgRef = doc(db, 'organizations', orgId);
   const snapshot = await getDoc(orgRef);
   return snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } as Org : null;
+};
+
+export const createOrganization = async (name: string): Promise<Org> => {
+  const orgRef = doc(collection(db, 'organizations'));
+  await setDoc(orgRef, {
+    name,
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now()
+  });
+  return {
+    id: orgRef.id,
+    name
+  };
 };
 
 // ============= BRANCHES =============
