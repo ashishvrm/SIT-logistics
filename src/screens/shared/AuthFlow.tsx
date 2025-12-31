@@ -15,7 +15,6 @@ export const AuthFlow: React.FC = () => {
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [orgId, setOrgId] = useState('org1');
-  const [branchId, setBranchId] = useState('b1');
   const [role, setRole] = useState<'Driver' | 'Fleet'>('Driver');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -33,7 +32,7 @@ export const AuthFlow: React.FC = () => {
   const setBranch = useSessionStore((s) => s.setBranch);
   const setRoleStore = useSessionStore((s) => s.setRole);
 
-  const steps = ['Welcome', 'Permissions', 'Login', 'OTP', 'Organization', 'Branch', 'Role'];
+  const steps = ['Welcome', 'Permissions', 'Login', 'OTP', 'Organization', 'Role'];
 
   // Load organizations when step 4 is reached
   useEffect(() => {
@@ -159,13 +158,15 @@ export const AuthFlow: React.FC = () => {
         if (userId) {
           await authService.updateUserOrgAndRole(
             userId,
-            FIREBASE_FEATURES.ORG_ID, // Use the actual org ID from config
+            orgId, // Use selected org ID
             role
           );
         }
         
-        setOrg({ id: FIREBASE_FEATURES.ORG_ID, name: 'Apex Logistics' });
-        setBranch({ id: branchId, name: 'Mumbai Hub', orgId: FIREBASE_FEATURES.ORG_ID });
+        // Find selected org name
+        const selectedOrg = organizations.find(org => org.id === orgId);
+        setOrg({ id: orgId, name: selectedOrg?.name || 'Organization' });
+        setBranch({ id: 'default', name: 'Main Branch', orgId: orgId });
         setRoleStore(role);
         setLoggedIn(true);
       } catch (error) {
@@ -315,27 +316,6 @@ export const AuthFlow: React.FC = () => {
             )}
 
             {step === 5 && (
-              <View style={styles.optionsContainer}>
-                <TouchableOpacity
-                  style={[styles.optionButton, branchId === 'b1' && styles.optionButtonActive]}
-                  onPress={() => setBranchId('b1')}
-                >
-                  <Text style={[styles.optionText, branchId === 'b1' && styles.optionTextActive]}>
-                    Mumbai Hub
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.optionButton, branchId === 'b2' && styles.optionButtonActive]}
-                  onPress={() => setBranchId('b2')}
-                >
-                  <Text style={[styles.optionText, branchId === 'b2' && styles.optionTextActive]}>
-                    Delhi Hub
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
-            {step === 6 && (
               <View style={styles.roleContainer}>
                 <TouchableOpacity
                   style={[styles.roleCard, role === 'Driver' && styles.roleCardActive]}
