@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigation } from '@react-navigation/native';
 import { fetchTrips, fetchVehicles, fetchInvoices, fetchNotifications } from '../../services/dataService';
 import { FIREBASE_FEATURES } from '../../config/featureFlags';
 import { Colors, Spacing, Radius, Shadows } from '../../theme/tokens';
@@ -10,6 +11,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { UserMenu } from '../../components/ui/UserMenu';
 
 export const FleetBilling: React.FC = () => {
+  const navigation = useNavigation<any>();
   const { data } = useQuery({ queryKey: ['invoices'], queryFn: () => fetchInvoices(FIREBASE_FEATURES.ORG_ID) });
   
   const totalRevenue = data?.reduce((sum, inv) => sum + inv.amount, 0) || 0;
@@ -75,7 +77,10 @@ export const FleetBilling: React.FC = () => {
         keyExtractor={(i) => i.id}
         contentContainerStyle={styles.listContent}
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.invoiceCard}>
+          <TouchableOpacity 
+            style={styles.invoiceCard}
+            onPress={() => navigation.navigate('FleetInvoiceDetail', { id: item.id })}
+          >
             <View style={styles.cardHeader}>
               <View style={[styles.iconContainer, { backgroundColor: `${getStatusColor(item.status)}20` }]}>
                 <Icon name={getStatusIcon(item.status)} size={28} color={getStatusColor(item.status)} />

@@ -18,6 +18,7 @@ import { FleetLiveMap } from '../screens/fleet/LiveMap';
 import { FleetTrips } from '../screens/fleet/Trips';
 import { FleetBilling } from '../screens/fleet/Billing';
 import { FleetFleet } from '../screens/fleet/Fleet';
+import { FleetInvoiceDetail } from '../screens/fleet/InvoiceDetail';
 
 const Stack = createNativeStackNavigator();
 const DriverTabs = createBottomTabNavigator();
@@ -112,6 +113,7 @@ export const AppNavigator = () => {
           <Stack.Screen name="FleetTabs" component={FleetTabNavigator} />
           <Stack.Screen name="FleetTripDetail" component={DriverTripDetail} />
           <Stack.Screen name="FleetTracking" component={DriverTracking} />
+          <Stack.Screen name="FleetInvoiceDetail" component={FleetInvoiceDetail} />
         </>
       )}
     </Stack.Navigator>
