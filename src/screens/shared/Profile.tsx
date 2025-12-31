@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Switch } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Switch, Alert } from 'react-native';
 import { Colors, Spacing, Radius, Shadows } from '../../theme/tokens';
 import { useSessionStore } from '../../store/session';
+import { authService } from '../../services/authService';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
@@ -12,6 +13,30 @@ export const DriverProfile: React.FC = () => {
   const toggleOffline = useSessionStore((s) => s.toggleOffline);
   const reset = useSessionStore((s) => s.reset);
   const role = useSessionStore((s) => s.role);
+  const phoneNumber = useSessionStore((s) => s.phoneNumber);
+
+  const handleLogout = async () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await authService.signOut();
+              reset();
+            } catch (error) {
+              console.error('Error logging out:', error);
+              Alert.alert('Error', 'Failed to logout. Please try again.');
+            }
+          }
+        }
+      ]
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -25,6 +50,7 @@ export const DriverProfile: React.FC = () => {
           </View>
           <Text style={styles.profileName}>Arjun Singh</Text>
           <Text style={styles.profileRole}>{role} Account</Text>
+          {phoneNumber && <Text style={styles.profilePhone}>{phoneNumber}</Text>}
         </View>
       </LinearGradient>
 
@@ -71,7 +97,7 @@ export const DriverProfile: React.FC = () => {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.logoutButton} onPress={reset}>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Icon name="logout" size={20} color={Colors.error} />
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
@@ -111,7 +137,12 @@ const styles = StyleSheet.create({
   },
   profileRole: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)'
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 4
+  },
+  profilePhone: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.6)'
   },
   content: {
     flex: 1,

@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { Colors, Spacing, Radius, Shadows } from '../../theme/tokens';
 import { useSessionStore } from '../../store/session';
 import { fetchTrips, fetchVehicles, fetchInvoices, fetchNotifications } from '../../services/dataService';
 import { FIREBASE_FEATURES } from '../../config/featureFlags';
+import { authService } from '../../services/authService';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
@@ -14,7 +15,13 @@ export const AuthFlow: React.FC = () => {
   const [orgId, setOrgId] = useState('org1');
   const [branchId, setBranchId] = useState('b1');
   const [role, setRole] = useState<'Driver' | 'Fleet'>('Driver');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  
   const setLoggedIn = useSessionStore((s) => s.setLoggedIn);
+  const setUserId = useSessionStore((s) => s.setUserId);
+  const setPhoneNumber = useSessionStore((s) => s.setPhoneNumber);
+  const setAuthExpiry = useSessionStore((s) => s.setAuthExpiry);
   const setOrg = useSessionStore((s) => s.setOrg);
   const setBranch = useSessionStore((s) => s.setBranch);
   const setRoleStore = useSessionStore((s) => s.setRole);
@@ -22,7 +29,61 @@ export const AuthFlow: React.FC = () => {
   const steps = ['Welcome', 'Permissions', 'Login', 'OTP', 'Organization', 'Branch', 'Role'];
 
   const next = async () => {
-    if (step === 2) await new Promise(resolve => setTimeout(resolve, 500)); // Simulate login delay
+    setError('');
+    
+    // Step 2: Send OTP
+    if (step === 2) {
+      if (!phone || phone.length < 10) {
+        setError('Please enter a valid phone number');
+        return;
+      }
+      
+      setLoading(true);
+      const formattedPhone = phone.startsWith('+') ? phone : `+1${phone}`;
+      const result = await authService.sendOTP(formattedPhone);
+      setLoading(false);
+      
+      if (!result.success) {
+        setError(result.error || 'Failed to send OTP');
+        Alert.alert('Error', result.error || 'Failed to send OTP');
+        return;
+      }
+      
+      Alert.alert('Success', 'OTP sent to your phone');
+      setStep((s) => s + 1);
+      return;
+    }
+    
+    // Step 3: Verify OTP
+    if (step === 3) {
+      if (!otp || otp.length !== 6) {
+        setError('Please enter the 6-digit OTP');
+        return;
+      }
+      
+      setLoading(true);
+      const result = await authService.verifyOTP(otp);
+      setLoading(false);
+      
+      if (!result.success) {
+        setError(result.error || 'Invalid OTP');
+        Alert.alert('Error', result.error || 'Invalid OTP');
+        return;
+      }
+      
+      // Store user info
+      if (result.user) {
+        setUserId(result.user.uid);
+        setPhoneNumber(result.user.phoneNumber || phone);
+        const expiry = Date.now() + (7 * 24 * 60 * 60 * 1000); // 7 days
+        setAuthExpiry(expiry);
+      }
+      
+      setStep((s) => s + 1);
+      return;
+    }
+    
+    // Final step: Complete onboarding
     if (step === steps.length - 1) {
       setOrg({ id: orgId, name: 'Apex Logistics' });
       setBranch({ id: branchId, name: 'Mumbai Hub', orgId });
@@ -30,6 +91,7 @@ export const AuthFlow: React.FC = () => {
       setLoggedIn(true);
       return;
     }
+    
     setStep((s) => s + 1);
   };
 
@@ -68,30 +130,43 @@ export const AuthFlow: React.FC = () => {
             )}
 
             {step === 2 && (
-              <View style={styles.inputContainer}>
-                <Icon name="phone" size={20} color={Colors.textSecondary} style={styles.inputIcon} />
-                <TextInput
-                  placeholder="Phone or Email"
-                  placeholderTextColor={Colors.textSecondary}
-                  value={phone}
-                  onChangeText={setPhone}
-                  style={styles.input}
-                />
-              </View>
+              <>
+                <View style={styles.inputContainer}>
+                  <Icon name="phone" size={20} color={Colors.textSecondary} style={styles.inputIcon} />
+                  <TextInput
+                    placeholder="Phone Number (e.g., +1234567890)"
+                    placeholderTextColor={Colors.textSecondary}
+                    value={phone}
+                    onChangeText={setPhone}
+                    style={styles.input}
+                    keyboardType="phone-pad"
+                    editable={!loading}
+                  />
+                </View>
+                {error && <Text style={styles.errorText}>{error}</Text>}
+              </>
             )}
 
             {step === 3 && (
-              <View style={styles.inputContainer}>
-                <Icon name="lock" size={20} color={Colors.textSecondary} style={styles.inputIcon} />
-                <TextInput
-                  placeholder="Enter OTP"
-                  placeholderTextColor={Colors.textSecondary}
-                  value={otp}
-                  onChangeText={setOtp}
-                  style={styles.input}
-                  keyboardType="number-pad"
-                />
-              </View>
+              <>
+                <Text style={styles.otpHint}>
+                  📱 For testing, use OTP: <Text style={styles.otpCode}>123456</Text>
+                </Text>
+                <View style={styles.inputContainer}>
+                  <Icon name="lock" size={20} color={Colors.textSecondary} style={styles.inputIcon} />
+                  <TextInput
+                    placeholder="Enter 6-digit OTP"
+                    placeholderTextColor={Colors.textSecondary}
+                    value={otp}
+                    onChangeText={setOtp}
+                    style={styles.input}
+                    keyboardType="number-pad"
+                    maxLength={6}
+                    editable={!loading}
+                  />
+                </View>
+                {error && <Text style={styles.errorText}>{error}</Text>}
+              </>
             )}
 
             {step === 4 && (
@@ -162,11 +237,21 @@ export const AuthFlow: React.FC = () => {
             )}
           </View>
 
-          <TouchableOpacity style={styles.primaryButton} onPress={next}>
-            <Text style={styles.primaryButtonText}>
-              {step === steps.length - 1 ? 'Get Started' : 'Continue'}
-            </Text>
-            <Icon name="arrow-right" size={20} color={Colors.textLight} />
+          <TouchableOpacity 
+            style={[styles.primaryButton, loading && styles.primaryButtonDisabled]} 
+            onPress={next}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color={Colors.textLight} />
+            ) : (
+              <>
+                <Text style={styles.primaryButtonText}>
+                  {step === steps.length - 1 ? 'Get Started' : 'Continue'}
+                </Text>
+                <Icon name="arrow-right" size={20} color={Colors.textLight} />
+              </>
+            )}
           </TouchableOpacity>
         </ScrollView>
       </LinearGradient>
@@ -318,9 +403,32 @@ const styles = StyleSheet.create({
     gap: 8,
     ...Shadows.soft
   },
+  primaryButtonDisabled: {
+    opacity: 0.6
+  },
   primaryButtonText: {
     fontSize: 18,
     fontWeight: '700',
     color: Colors.textLight
+  },
+  errorText: {
+    color: Colors.error,
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: 'center'
+  },
+  otpHint: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 16,
+    backgroundColor: `${Colors.primary}15`,
+    padding: 12,
+    borderRadius: Radius.button
+  },
+  otpCode: {
+    fontWeight: '800',
+    color: Colors.primary,
+    fontSize: 16
   }
 });
