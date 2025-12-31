@@ -85,10 +85,28 @@ export const AuthFlow: React.FC = () => {
     
     // Final step: Complete onboarding
     if (step === steps.length - 1) {
-      setOrg({ id: orgId, name: 'Apex Logistics' });
-      setBranch({ id: branchId, name: 'Mumbai Hub', orgId });
-      setRoleStore(role);
-      setLoggedIn(true);
+      setLoading(true);
+      try {
+        // Update user profile in Firestore with org and role
+        const userId = useSessionStore.getState().userId;
+        if (userId) {
+          await authService.updateUserOrgAndRole(
+            userId,
+            FIREBASE_FEATURES.ORG_ID, // Use the actual org ID from config
+            role
+          );
+        }
+        
+        setOrg({ id: FIREBASE_FEATURES.ORG_ID, name: 'Apex Logistics' });
+        setBranch({ id: branchId, name: 'Mumbai Hub', orgId: FIREBASE_FEATURES.ORG_ID });
+        setRoleStore(role);
+        setLoggedIn(true);
+      } catch (error) {
+        console.error('Error completing onboarding:', error);
+        Alert.alert('Error', 'Failed to complete registration. Please try again.');
+      } finally {
+        setLoading(false);
+      }
       return;
     }
     

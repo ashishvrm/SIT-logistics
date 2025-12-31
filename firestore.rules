@@ -21,7 +21,11 @@ service cloud.firestore {
     }
     
     function isFleetManager() {
-      return isAuthenticated() && getUserData().role == "FleetManager";
+      return isAuthenticated() && getUserData().role == "Fleet";
+    }
+    
+    function isManager() {
+      return isAuthenticated() && getUserData().role == "Manager";
     }
     
     function isAdmin() {
@@ -29,7 +33,7 @@ service cloud.firestore {
     }
     
     function canManageOrg(orgId) {
-      return (isFleetManager() || isAdmin()) && belongsToOrg(orgId);
+      return (isFleetManager() || isManager() || isAdmin()) && belongsToOrg(orgId);
     }
     
     // ============= ORGANIZATIONS =============

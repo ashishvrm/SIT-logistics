@@ -6,9 +6,11 @@ import {
   onAuthStateChanged,
   User,
   RecaptchaVerifier,
-  ConfirmationResult
+  ConfirmationResult,
+  updateProfile
 } from 'firebase/auth';
-import { auth } from '../../firebaseConfig';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { auth, db } from '../../firebaseConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
@@ -19,16 +21,27 @@ const DEV_OTP = '123456'; // Development OTP for testing
 interface AuthSession {
   userId: string;
   phoneNumber: string;
+  orgId?: string;
+  role?: string;
   expiresAt: number;
   createdAt: number;
+}
+
+interface UserProfile {
+  uid: string;
+  phoneNumber: string;
+  orgId?: string;
+  role?: string;
+  createdAt: any;
+  updatedAt: any;
 }
 
 /**
  * Firebase Phone Authentication Service
  * Handles phone number verification and OTP authentication
  * 
- * NOTE: Phone auth in React Native requires additional setup with Firebase Admin SDK
- * or a cloud function. For development, we use anonymous auth with phone number storage.
+ * DEV MODE: Uses mock authentication for testing
+ * PRODUCTION: Requires backend API for OTP sending and verification
  */
 class AuthService {
   private confirmationResult: ConfirmationResult | null = null;
@@ -93,13 +106,24 @@ class AuthService {
         }
 
         // Create a mock user object for development
+        const mockUserId = `dev_${Date.now()}`;
         const mockUser = {
-          uid: `dev_${Date.now()}`,
+          uid: mockUserId,
           phoneNumber: this.pendingPhoneNumber
         };
 
         // Store session with phone number (no Firebase auth required in dev mode)
-        await this.storeSessionDev(mockUser.uid, this.pendingPhoneNumber);
+        await this.storeSessionDev(mockUserId, this.pendingPhoneNumber);
+        
+        // Create or update user in Firestore for security rules compatibility
+        await this.createOrUpdateUserProfile({
+          uid: mockUserId,
+          phoneNumber: this.pendingPhoneNumber,
+          orgId: undefined, // Will be set during onboarding
+          role: undefined,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
 
         console.log('✅ OTP verified successfully (dev mode)');
         return { success: true, user: mockUser };
@@ -107,7 +131,7 @@ class AuthService {
 
       // Production mode would:
       // 1. Call backend API to verify OTP
-      // 2. Backend returns custom token
+      // 2. Backend returns custom token or creates Firebase user
       // 3. Sign in with custom token
       // 4. Store session
 
@@ -118,6 +142,57 @@ class AuthService {
         success: false, 
         error: error.message || 'Failed to verify OTP' 
       };
+    }
+  }
+
+  /**
+   * Create or update user profile in Firestore
+   * This is needed for security rules to work properly
+   */
+  private async createOrUpdateUserProfile(profile: UserProfile): Promise<void> {
+    try {
+      const userRef = doc(db, 'users', profile.uid);
+      const userDoc = await getDoc(userRef);
+      
+      if (!userDoc.exists()) {
+        // Create new user
+        await setDoc(userRef, profile);
+        console.log('✅ User profile created in Firestore');
+      } else {
+        // Update existing user
+        await setDoc(userRef, { ...profile, updatedAt: serverTimestamp() }, { merge: true });
+        console.log('✅ User profile updated in Firestore');
+      }
+    } catch (error) {
+      console.error('❌ Error creating/updating user profile:', error);
+    }
+  }
+
+  /**
+   * Update user's org and role after onboarding
+   */
+  async updateUserOrgAndRole(userId: string, orgId: string, role: string): Promise<void> {
+    try {
+      const userRef = doc(db, 'users', userId);
+      await setDoc(userRef, {
+        orgId,
+        role,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+      
+      // Update session
+      const sessionStr = await AsyncStorage.getItem(SESSION_KEY);
+      if (sessionStr) {
+        const session: AuthSession = JSON.parse(sessionStr);
+        session.orgId = orgId;
+        session.role = role;
+        await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      }
+      
+      console.log('✅ User org and role updated');
+    } catch (error) {
+      console.error('❌ Error updating user org and role:', error);
+      throw error;
     }
   }
 
