@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { IconButton } from 'react-native-paper';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Colors, Radius, Shadows } from '../../theme/tokens';
 
 interface Props {
@@ -10,8 +10,12 @@ interface Props {
 
 export const MapControls: React.FC<Props> = ({ onLocate, onLayers }) => (
   <View style={styles.container}>
-    <IconButton icon="crosshairs-gps" containerColor={Colors.lightSurface} style={styles.button} onPress={onLocate} />
-    <IconButton icon="layers" containerColor={Colors.lightSurface} style={styles.button} onPress={onLayers} />
+    <TouchableOpacity style={styles.button} onPress={onLocate}>
+      <Icon name="crosshairs-gps" size={24} color={Colors.primary} />
+    </TouchableOpacity>
+    <TouchableOpacity style={styles.button} onPress={onLayers}>
+      <Icon name="layers" size={24} color={Colors.primary} />
+    </TouchableOpacity>
   </View>
 );
 
@@ -23,7 +27,12 @@ const styles = StyleSheet.create({
     gap: 8
   },
   button: {
+    backgroundColor: Colors.lightSurface,
+    width: 48,
+    height: 48,
     borderRadius: Radius.card,
+    alignItems: 'center',
+    justifyContent: 'center',
     ...Shadows.soft
   }
 });

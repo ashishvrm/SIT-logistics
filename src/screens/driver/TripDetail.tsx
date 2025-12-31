@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchTrips, updateTripStatus } from '../../services/dataService';
+import { fetchTrip, updateTripStatus } from '../../services/dataService';
 import { FIREBASE_FEATURES } from '../../config/featureFlags';
 import { Colors, Spacing, Radius, Shadows } from '../../theme/tokens';
 import { Trip } from '../../services/types';
@@ -13,7 +13,16 @@ export const DriverTripDetail: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<RouteProp<{ params: { id: string } }, 'params'>>();
   const queryClient = useQueryClient();
-  const { data: trip } = useQuery({ queryKey: ['trip', route.params.id], queryFn: () => fetchTrips(FIREBASE_FEATURES.ORG_ID).then((t) => t.find((x) => x.id === route.params.id) as Trip) });
+  const { data: trip, isLoading, error } = useQuery({ 
+    queryKey: ['trip', route.params.id], 
+    queryFn: async () => {
+      const foundTrip = await fetchTrip(route.params.id);
+      if (!foundTrip) {
+        throw new Error('Trip not found');
+      }
+      return foundTrip;
+    }
+  });
   const mutation = useMutation({
     mutationFn: (status: Trip['status']) => updateTripStatus(route.params.id, status),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['driver-trips'] })
@@ -23,7 +32,28 @@ export const DriverTripDetail: React.FC = () => {
   const isFleetContext = route.name === 'FleetTripDetail';
   const trackingScreenName = isFleetContext ? 'FleetTracking' : 'DriverTracking';
 
-  if (!trip) return null;
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>Loading trip details...</Text>
+      </View>
+    );
+  }
+
+  if (error || !trip) {
+    return (
+      <View style={styles.errorContainer}>
+        <Icon name="alert-circle" size={64} color={Colors.error} />
+        <Text style={styles.errorText}>Trip not found</Text>
+        <TouchableOpacity 
+          style={styles.backButton} 
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.backButtonText}>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   const nextAction = () => {
     const map: Record<Trip['status'], Trip['status']> = {
@@ -271,5 +301,41 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: Colors.primary
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.lightBackground
+  },
+  loadingText: {
+    fontSize: 16,
+    color: Colors.textSecondary,
+    marginTop: 16
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.lightBackground,
+    padding: Spacing.xl
+  },
+  errorText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: Colors.error,
+    marginTop: 16,
+    marginBottom: 24
+  },
+  backButton: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: Radius.button
+  },
+  backButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.textLight
   }
 });

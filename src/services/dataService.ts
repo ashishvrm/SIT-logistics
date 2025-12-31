@@ -27,10 +27,17 @@ export const fetchTrips = async (
 
 export const fetchTrip = async (tripId: string): Promise<Trip | null> => {
   if (FIREBASE_FEATURES.ENABLED) {
-    console.log('📡 Fetching trip from Firebase...');
-    return firebaseService.fetchTrip(tripId);
+    console.log('📡 Fetching trip from Firebase...', tripId);
+    const trip = await firebaseService.fetchTrip(tripId);
+    // Fallback to mock if not found in Firebase
+    if (!trip) {
+      console.log('⚠️  Trip not in Firebase, falling back to Mock API...');
+      const trips = await mockApi.fetchTrips();
+      return trips.find(t => t.id === tripId) || null;
+    }
+    return trip;
   }
-  console.log('🔧 Fetching trip from Mock API...');
+  console.log('🔧 Fetching trip from Mock API...', tripId);
   const trips = await mockApi.fetchTrips();
   return trips.find(t => t.id === tripId) || null;
 };

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator, Platform } from 'react-native';
+import * as Location from 'expo-location';
 import { Colors, Spacing, Radius, Shadows } from '../../theme/tokens';
 import { useSessionStore } from '../../store/session';
 import { fetchTrips, fetchVehicles, fetchInvoices, fetchNotifications } from '../../services/dataService';
@@ -17,6 +18,8 @@ export const AuthFlow: React.FC = () => {
   const [role, setRole] = useState<'Driver' | 'Fleet'>('Driver');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [locationGranted, setLocationGranted] = useState(false);
+  const [notificationGranted, setNotificationGranted] = useState(false);
   
   const setLoggedIn = useSessionStore((s) => s.setLoggedIn);
   const setUserId = useSessionStore((s) => s.setUserId);
@@ -27,6 +30,27 @@ export const AuthFlow: React.FC = () => {
   const setRoleStore = useSessionStore((s) => s.setRole);
 
   const steps = ['Welcome', 'Permissions', 'Login', 'OTP', 'Organization', 'Branch', 'Role'];
+
+  const requestLocationPermission = async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === 'granted') {
+        setLocationGranted(true);
+        Alert.alert('Success', 'Location access granted');
+      } else {
+        Alert.alert('Permission Denied', 'Location access is optional but recommended for better tracking');
+      }
+    } catch (error) {
+      console.error('Error requesting location permission:', error);
+      Alert.alert('Error', 'Failed to request location permission');
+    }
+  };
+
+  const requestNotificationPermission = async () => {
+    // Notification permissions temporarily disabled
+    setNotificationGranted(true);
+    Alert.alert('Skipped', 'Notification permissions are optional and can be configured later');
+  };
 
   const next = async () => {
     setError('');
@@ -134,16 +158,47 @@ export const AuthFlow: React.FC = () => {
 
             {step === 1 && (
               <View style={styles.permissionsContainer}>
-                <View style={styles.permissionItem}>
+                <Text style={styles.permissionDescription}>
+                  Grant optional permissions for a better experience
+                </Text>
+                
+                <TouchableOpacity 
+                  style={styles.permissionItem}
+                  onPress={requestLocationPermission}
+                  disabled={locationGranted}
+                >
                   <Icon name="map-marker" size={24} color={Colors.primary} />
-                  <Text style={styles.permissionText}>Location Access</Text>
-                  <Icon name="check-circle" size={24} color={Colors.success} />
-                </View>
-                <View style={styles.permissionItem}>
+                  <View style={styles.permissionContent}>
+                    <Text style={styles.permissionText}>Location Access</Text>
+                    <Text style={styles.permissionSubtext}>For real-time tracking</Text>
+                  </View>
+                  {locationGranted ? (
+                    <Icon name="check-circle" size={24} color={Colors.success} />
+                  ) : (
+                    <Icon name="chevron-right" size={24} color={Colors.textSecondary} />
+                  )}
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.permissionItem}
+                  onPress={requestNotificationPermission}
+                  disabled={notificationGranted}
+                >
                   <Icon name="bell" size={24} color={Colors.primary} />
-                  <Text style={styles.permissionText}>Notifications</Text>
-                  <Icon name="check-circle" size={24} color={Colors.success} />
-                </View>
+                  <View style={styles.permissionContent}>
+                    <Text style={styles.permissionText}>Notifications</Text>
+                    <Text style={styles.permissionSubtext}>For important updates</Text>
+                  </View>
+                  {notificationGranted ? (
+                    <Icon name="check-circle" size={24} color={Colors.success} />
+                  ) : (
+                    <Icon name="chevron-right" size={24} color={Colors.textSecondary} />
+                  )}
+                </TouchableOpacity>
+                
+                <Text style={styles.skipText}>
+                  Both permissions are optional. You can continue without granting them.
+                </Text>
               </View>
             )}
 
@@ -325,6 +380,12 @@ const styles = StyleSheet.create({
   permissionsContainer: {
     gap: 16
   },
+  permissionDescription: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 8
+  },
   permissionItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -333,11 +394,25 @@ const styles = StyleSheet.create({
     borderRadius: Radius.card,
     gap: 12
   },
+  permissionContent: {
+    flex: 1
+  },
   permissionText: {
-    flex: 1,
     fontSize: 16,
     fontWeight: '600',
     color: Colors.textPrimary
+  },
+  permissionSubtext: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginTop: 2
+  },
+  skipText: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 8,
+    fontStyle: 'italic'
   },
   inputContainer: {
     flexDirection: 'row',
