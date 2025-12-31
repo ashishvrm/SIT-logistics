@@ -6,6 +6,7 @@ import { fetchTrips } from '../../services/dataService';
 import { FIREBASE_FEATURES } from '../../config/featureFlags';
 import { Colors, Spacing, Radius, Shadows } from '../../theme/tokens';
 import { LinearGradient } from 'expo-linear-gradient';
+import { UserMenu } from '../../components/ui/UserMenu';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 export const DriverHome: React.FC = () => {
@@ -21,7 +22,10 @@ export const DriverHome: React.FC = () => {
         colors={[Colors.darkGradientStart, Colors.darkGradientEnd]}
         style={styles.header}
       >
-        <Text style={styles.headerTitle}>Track Your Cargo</Text>
+        <View style={styles.headerTop}>
+          <Text style={styles.headerTitle}>Track Your Cargo</Text>
+          <UserMenu />
+        </View>
         <View style={styles.searchContainer}>
           <Icon name="magnify" size={20} color={Colors.textSecondary} style={styles.searchIcon} />
           <TextInput
@@ -91,11 +95,16 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
     paddingHorizontal: Spacing.lg
   },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20
+  },
   headerTitle: {
     fontSize: 28,
     fontWeight: '800',
-    color: Colors.textLight,
-    marginBottom: 20
+    color: Colors.textLight
   },
   searchContainer: {
     flexDirection: 'row',

@@ -1,13 +1,17 @@
 import React from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigation } from '@react-navigation/native';
 import { fetchTrips, fetchVehicles, fetchInvoices, fetchNotifications } from '../../services/dataService';
 import { FIREBASE_FEATURES } from '../../config/featureFlags';
 import { Colors, Spacing, Radius, Shadows } from '../../theme/tokens';
+import { formatCurrency, formatDate } from '../../utils/formatters';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { UserMenu } from '../../components/ui/UserMenu';
 
 export const FleetTrips: React.FC = () => {
+  const navigation = useNavigation<any>();
   const { data, isLoading, error } = useQuery({ 
     queryKey: ['fleet-trips'], 
     queryFn: () => fetchTrips(FIREBASE_FEATURES.ORG_ID) 
@@ -19,8 +23,13 @@ export const FleetTrips: React.FC = () => {
         colors={[Colors.darkGradientStart, Colors.darkGradientEnd]}
         style={styles.header}
       >
-        <Text style={styles.headerTitle}>All Trips</Text>
-        <Text style={styles.headerSubtitle}>{data?.length || 0} active shipments</Text>
+        <View style={styles.headerTop}>
+          <View>
+            <Text style={styles.headerTitle}>All Trips</Text>
+            <Text style={styles.headerSubtitle}>{data?.length || 0} active shipments</Text>
+          </View>
+          <UserMenu />
+        </View>
       </LinearGradient>
 
       {isLoading && (
@@ -104,7 +113,10 @@ export const FleetTrips: React.FC = () => {
 
               <View style={styles.bottomRow}>
                 <Text style={styles.customerText}>{item.customer}</Text>
-                <TouchableOpacity style={styles.viewButton}>
+                <TouchableOpacity 
+                  style={styles.viewButton}
+                  onPress={() => navigation.navigate('FleetTripDetail', { id: item.id })}
+                >
                   <Text style={styles.viewButtonText}>View Details</Text>
                   <Icon name="chevron-right" size={16} color={Colors.primary} />
                 </TouchableOpacity>
@@ -126,6 +138,11 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 24,
     paddingHorizontal: Spacing.lg
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start'
   },
   headerTitle: {
     fontSize: 28,

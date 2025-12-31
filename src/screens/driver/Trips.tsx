@@ -8,6 +8,7 @@ import { Colors, Spacing, Radius, Shadows } from '../../theme/tokens';
 import { TripStatus } from '../../services/types';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { UserMenu } from '../../components/ui/UserMenu';
 
 const filters: { label: string; value?: TripStatus }[] = [
   { label: 'All', value: undefined },
@@ -27,7 +28,10 @@ export const DriverTrips: React.FC = () => {
         colors={[Colors.darkGradientStart, Colors.darkGradientEnd]}
         style={styles.header}
       >
-        <Text style={styles.headerTitle}>My Trips</Text>
+        <View style={styles.headerTop}>
+          <Text style={styles.headerTitle}>My Trips</Text>
+          <UserMenu />
+        </View>
         <View style={styles.filterContainer}>
           {filters.map((f) => (
             <TouchableOpacity
@@ -116,11 +120,16 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     paddingHorizontal: Spacing.lg
   },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16
+  },
   headerTitle: {
     fontSize: 28,
     fontWeight: '800',
-    color: Colors.textLight,
-    marginBottom: 16
+    color: Colors.textLight
   },
   filterContainer: {
     flexDirection: 'row',

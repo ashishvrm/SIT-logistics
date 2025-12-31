@@ -7,6 +7,7 @@ import { Colors, Spacing, Radius, Shadows } from '../../theme/tokens';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { UserMenu } from '../../components/ui/UserMenu';
 
 export const FleetBilling: React.FC = () => {
   const { data } = useQuery({ queryKey: ['invoices'], queryFn: () => fetchInvoices(FIREBASE_FEATURES.ORG_ID) });
@@ -47,7 +48,10 @@ export const FleetBilling: React.FC = () => {
         colors={[Colors.darkGradientStart, Colors.darkGradientEnd]}
         style={styles.header}
       >
-        <Text style={styles.headerTitle}>Billing & Invoices</Text>
+        <View style={styles.headerTop}>
+          <Text style={styles.headerTitle}>Billing & Invoices</Text>
+          <UserMenu />
+        </View>
         <View style={styles.summaryCard}>
           <View style={styles.revenueSection}>
             <Text style={styles.revenueLabel}>Total Revenue</Text>
@@ -121,6 +125,11 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 24,
     paddingHorizontal: Spacing.lg
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center'
   },
   headerTitle: {
     fontSize: 28,

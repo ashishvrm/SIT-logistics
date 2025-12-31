@@ -4,6 +4,7 @@ import { Colors, Spacing, Radius, Shadows } from '../../theme/tokens';
 import { formatCurrency } from '../../utils/formatters';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { UserMenu } from '../../components/ui/UserMenu';
 
 export const DriverEarnings: React.FC = () => {
   return (
@@ -12,7 +13,10 @@ export const DriverEarnings: React.FC = () => {
         colors={[Colors.darkGradientStart, Colors.darkGradientEnd]}
         style={styles.header}
       >
-        <Text style={styles.headerTitle}>Earnings</Text>
+        <View style={styles.headerTop}>
+          <Text style={styles.headerTitle}>Earnings</Text>
+          <UserMenu />
+        </View>
         <View style={styles.totalCard}>
           <Text style={styles.totalLabel}>Total This Week</Text>
           <Text style={styles.totalAmount}>{formatCurrency(23500)}</Text>
@@ -72,11 +76,16 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
     paddingHorizontal: Spacing.lg
   },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20
+  },
   headerTitle: {
     fontSize: 28,
     fontWeight: '800',
-    color: Colors.textLight,
-    marginBottom: 20
+    color: Colors.textLight
   },
   totalCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.15)',

@@ -6,6 +6,7 @@ import { FIREBASE_FEATURES } from '../../config/featureFlags';
 import { Colors, Spacing, Radius, Shadows } from '../../theme/tokens';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { UserMenu } from '../../components/ui/UserMenu';
 
 export const FleetFleet: React.FC = () => {
   const { data } = useQuery({ queryKey: ['vehicles'], queryFn: () => fetchVehicles(FIREBASE_FEATURES.ORG_ID) });
@@ -42,8 +43,13 @@ export const FleetFleet: React.FC = () => {
         colors={[Colors.darkGradientStart, Colors.darkGradientEnd]}
         style={styles.header}
       >
-        <Text style={styles.headerTitle}>Fleet Management</Text>
-        <Text style={styles.headerSubtitle}>{data?.length || 0} vehicles registered</Text>
+        <View style={styles.headerTop}>
+          <View>
+            <Text style={styles.headerTitle}>Fleet Management</Text>
+            <Text style={styles.headerSubtitle}>{data?.length || 0} vehicles registered</Text>
+          </View>
+          <UserMenu />
+        </View>
       </LinearGradient>
 
       <FlatList
@@ -128,6 +134,11 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 24,
     paddingHorizontal: Spacing.lg
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start'
   },
   headerTitle: {
     fontSize: 28,

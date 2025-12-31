@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Colors, Spacing, Radius, Shadows } from '../../theme/tokens';
 import { LinearGradient } from 'expo-linear-gradient';
+import { UserMenu } from '../../components/ui/UserMenu';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const kpis = [
@@ -17,8 +18,13 @@ export const FleetDashboard: React.FC = () => (
       colors={[Colors.darkGradientStart, Colors.darkGradientEnd]}
       style={styles.header}
     >
-      <Text style={styles.headerTitle}>Operations Dashboard</Text>
-      <Text style={styles.headerSubtitle}>Real-time fleet overview</Text>
+      <View style={styles.headerTop}>
+        <View>
+          <Text style={styles.headerTitle}>Operations Dashboard</Text>
+          <Text style={styles.headerSubtitle}>Real-time fleet overview</Text>
+        </View>
+        <UserMenu />
+      </View>
     </LinearGradient>
 
     <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
@@ -66,6 +72,11 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 24,
     paddingHorizontal: Spacing.lg
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start'
   },
   headerTitle: {
     fontSize: 28,

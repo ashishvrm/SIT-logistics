@@ -8,6 +8,7 @@ import { Colors, Spacing, Radius, Shadows } from '../../theme/tokens';
 import { MapControls } from '../../components/maps/MapControls';
 import { gpsEvents } from '../../services/gpsSimulator';
 import { Vehicle } from '../../services/types';
+import { UserMenu } from '../../components/ui/UserMenu';
 
 export const FleetLiveMap: React.FC = () => {
   const { data: initialVehicles } = useQuery({ queryKey: ['vehicles'], queryFn: () => fetchVehicles(FIREBASE_FEATURES.ORG_ID) });
@@ -48,7 +49,10 @@ export const FleetLiveMap: React.FC = () => {
       </MapView>
       
       <View style={styles.statsCard}>
-        <Text style={styles.statsTitle}>Fleet Overview</Text>
+        <View style={styles.statsHeader}>
+          <Text style={styles.statsTitle}>Fleet Overview</Text>
+          <UserMenu />
+        </View>
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
             <View style={[styles.statDot, { backgroundColor: Colors.primary }]} />
@@ -83,11 +87,16 @@ const styles = StyleSheet.create({
     borderRadius: Radius.cardLarge,
     ...Shadows.card
   },
+  statsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12
+  },
   statsTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: Colors.textPrimary,
-    marginBottom: 12
+    color: Colors.textPrimary
   },
   statsRow: {
     flexDirection: 'row',

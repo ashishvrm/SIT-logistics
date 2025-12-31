@@ -19,6 +19,10 @@ export const DriverTripDetail: React.FC = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['driver-trips'] })
   });
 
+  // Detect if we're in Fleet or Driver context based on route name
+  const isFleetContext = route.name === 'FleetTripDetail';
+  const trackingScreenName = isFleetContext ? 'FleetTracking' : 'DriverTracking';
+
   if (!trip) return null;
 
   const nextAction = () => {
@@ -110,7 +114,7 @@ export const DriverTripDetail: React.FC = () => {
 
         <TouchableOpacity
           style={styles.primaryButton}
-          onPress={() => navigation.navigate('DriverTracking', { id: trip.id })}
+          onPress={() => navigation.navigate(trackingScreenName, { id: trip.id })}
         >
           <Icon name="map-marker-path" size={20} color={Colors.textLight} />
           <Text style={styles.primaryButtonText}>Track Live</Text>

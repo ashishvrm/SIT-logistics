@@ -119,8 +119,6 @@ class AuthService {
         await this.createOrUpdateUserProfile({
           uid: mockUserId,
           phoneNumber: this.pendingPhoneNumber,
-          orgId: undefined, // Will be set during onboarding
-          role: undefined,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         });
@@ -154,17 +152,34 @@ class AuthService {
       const userRef = doc(db, 'users', profile.uid);
       const userDoc = await getDoc(userRef);
       
+      // Remove undefined fields to avoid Firestore errors
+      const cleanProfile: any = {
+        uid: profile.uid,
+        phoneNumber: profile.phoneNumber,
+        createdAt: profile.createdAt,
+        updatedAt: profile.updatedAt
+      };
+      
+      // Only add orgId and role if they are defined
+      if (profile.orgId !== undefined) {
+        cleanProfile.orgId = profile.orgId;
+      }
+      if (profile.role !== undefined) {
+        cleanProfile.role = profile.role;
+      }
+      
       if (!userDoc.exists()) {
         // Create new user
-        await setDoc(userRef, profile);
+        await setDoc(userRef, cleanProfile);
         console.log('✅ User profile created in Firestore');
       } else {
         // Update existing user
-        await setDoc(userRef, { ...profile, updatedAt: serverTimestamp() }, { merge: true });
+        await setDoc(userRef, { ...cleanProfile, updatedAt: serverTimestamp() }, { merge: true });
         console.log('✅ User profile updated in Firestore');
       }
     } catch (error) {
       console.error('❌ Error creating/updating user profile:', error);
+      throw error;
     }
   }
 

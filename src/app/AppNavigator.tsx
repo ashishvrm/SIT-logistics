@@ -88,6 +88,7 @@ const FleetTabNavigator = () => (
     <FleetTabs.Screen name="FleetTrips" component={FleetTrips} options={{ tabBarLabel: 'Trips', tabBarIcon: ({ color, size }) => <Icon name="clipboard-list" color={color} size={size} /> }} />
     <FleetTabs.Screen name="FleetFleet" component={FleetFleet} options={{ tabBarLabel: 'Fleet', tabBarIcon: ({ color, size }) => <Icon name="truck-fast" color={color} size={size} /> }} />
     <FleetTabs.Screen name="FleetBilling" component={FleetBilling} options={{ tabBarLabel: 'Billing', tabBarIcon: ({ color, size }) => <Icon name="cash" color={color} size={size} /> }} />
+    <FleetTabs.Screen name="FleetProfile" component={DriverProfile} options={{ tabBarLabel: 'Profile', tabBarIcon: ({ color, size }) => <Icon name="account" color={color} size={size} /> }} />
   </FleetTabs.Navigator>
 );
 
@@ -109,6 +110,8 @@ export const AppNavigator = () => {
       ) : (
         <>
           <Stack.Screen name="FleetTabs" component={FleetTabNavigator} />
+          <Stack.Screen name="FleetTripDetail" component={DriverTripDetail} />
+          <Stack.Screen name="FleetTracking" component={DriverTracking} />
         </>
       )}
     </Stack.Navigator>
